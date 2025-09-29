@@ -1,5 +1,6 @@
 package com.demondev.itemGenerator;
 
+import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -21,7 +22,11 @@ public class GenerationTask extends BukkitRunnable {
         long currentTime = System.currentTimeMillis() / 1000;
         List<ActiveGenerator> generatorsCopy = new ArrayList<>(manager.getActiveGenerators()); // Avoid concurrent mod
         for (ActiveGenerator gen : generatorsCopy) {
-            if (currentTime - gen.lastGenerate < gen.type.interval) continue;
+            long timeLeft = gen.type.interval - (currentTime - gen.lastGenerate);
+            // Update hologram async? No, schedule sync
+            plugin.getServer().getScheduler().runTask(plugin, () -> updateHologram(gen));
+
+            if (timeLeft > 0) continue;
 
             // Select item based on chance
             GeneratorItem selected = null;
@@ -52,9 +57,18 @@ public class GenerationTask extends BukkitRunnable {
                         }
                         gen.block.getWorld().dropItemNaturally(gen.block.getLocation().add(0.5, 1, 0.5), toSpawn);
                         gen.lastGenerate = currentTime;
+                        updateHologram(gen); // Update after generation
                     }
                 }.runTask(plugin);
             }
         }
+    }
+
+    private void updateHologram(ActiveGenerator ag) {
+        if (ag.hologram == null) return;
+        long currentTime = System.currentTimeMillis() / 1000;
+        long timeLeft = ag.type.interval - (currentTime - ag.lastGenerate);
+        String display = ChatColor.GOLD + ag.type.name + " Generator - " + Math.max(0, timeLeft) + "s";
+        ag.hologram.setCustomName(display);
     }
 }

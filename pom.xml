@@ -6,7 +6,7 @@
 
     <groupId>com.demondev</groupId>
     <artifactId>ItemGenerator</artifactId>
-    <version>0.0.1</version>
+    <version>0.5.0</version>
     <packaging>jar</packaging>
 
     <name>ItemGenerator</name>

@@ -1,7 +1,10 @@
 package com.demondev.itemGenerator;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -44,12 +47,14 @@ public class GeneratorListener implements Listener {
         ActiveGenerator ag = new ActiveGenerator(block, type);
         ag.lastGenerate = System.currentTimeMillis() / 1000;
         manager.addActiveGenerator(ag);
+        spawnHologram(ag);
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         ActiveGenerator gen = manager.getActiveGenerator(event.getBlock().getLocation());
         if (gen != null) {
+            removeHologram(gen);
             manager.removeActiveGenerator(gen);
             // Optional: event.getPlayer().sendMessage(ChatColor.RED + "Generator removed.");
         }
@@ -90,5 +95,33 @@ public class GeneratorListener implements Listener {
         if (!hasPerm) {
             event.getInventory().setResult(null);
         }
+    }
+
+    private void spawnHologram(ActiveGenerator ag) {
+        Location loc = ag.block.getLocation().add(0.5, 1.5, 0.5);
+        ArmorStand as = (ArmorStand) ag.block.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
+        as.setGravity(false);
+        as.setCanPickupItems(false);
+        as.setCustomNameVisible(true);
+        as.setVisible(false);
+        as.setInvulnerable(true);
+        as.setMarker(true);
+        ag.hologram = as;
+        updateHologram(ag); // Initial update
+    }
+
+    private void removeHologram(ActiveGenerator ag) {
+        if (ag.hologram != null) {
+            ag.hologram.remove();
+            ag.hologram = null;
+        }
+    }
+
+    private void updateHologram(ActiveGenerator ag) {
+        if (ag.hologram == null) return;
+        long currentTime = System.currentTimeMillis() / 1000;
+        long timeLeft = ag.type.interval - (currentTime - ag.lastGenerate);
+        String display = ChatColor.GOLD + ag.type.name + " Generator - " + Math.max(0, timeLeft) + "s";
+        ag.hologram.setCustomName(display);
     }
 }
