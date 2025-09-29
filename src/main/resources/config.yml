@@ -1,0 +1,36 @@
+generators:
+  diamond:
+    block: DIAMOND_BLOCK
+    items:
+      - item: DIAMOND
+        amount: 1
+        chance: 50.0
+      - item: EMERALD
+        amount: 1
+        chance: 50.0
+    interval: 60  # seconds between generations
+    permission: itemgen.use.diamond
+    recipe:
+      shape:
+        - 'GGG'
+        - 'GDG'
+        - 'GGG'
+      ingredients:
+        G: GOLD_INGOT
+        D: DIAMOND
+  iron:
+    block: IRON_BLOCK
+    items:
+      - item: IRON_INGOT
+        amount: 5
+        chance: 100.0
+    interval: 30
+    permission: itemgen.use.iron
+    recipe:
+      shape:
+        - 'III'
+        - 'ISI'
+        - 'III'
+      ingredients:
+        I: IRON_INGOT
+        S: STONE

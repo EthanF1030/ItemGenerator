@@ -1,0 +1,16 @@
+name: ItemGenerator
+version: '0.0.1'
+main: com.demondev.itemGenerator.ItemGenerator
+api-version: '1.21'
+load: STARTUP
+authors: [ DemonDev ]
+description: A Item Generator Plugin for 1.21.8
+commands:
+  itemgen:
+    description: Item Generator commands
+    permission: itemgen.use
+permissions:
+  itemgen.use:
+    default: true
+  itemgen.admin:
+    default: op
