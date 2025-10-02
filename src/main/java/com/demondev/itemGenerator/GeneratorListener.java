@@ -56,7 +56,7 @@ public class GeneratorListener implements Listener {
         if (gen != null) {
             removeHologram(gen);
             manager.removeActiveGenerator(gen);
-            // Optional: event.getPlayer().sendMessage(ChatColor.RED + "Generator removed.");
+           event.getPlayer().sendMessage(ChatColor.RED + "Generator removed.");
         }
     }
 
@@ -70,7 +70,6 @@ public class GeneratorListener implements Listener {
 
         if (event.getPlayer().hasPermission("itemgen.admin")) {
             event.getPlayer().sendMessage(ChatColor.GREEN + "This is a " + gen.type.name + " generator.");
-            // Could add more info or removal option
         }
     }
 
