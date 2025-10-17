@@ -1,8 +1,10 @@
 package com.demondev.itemGenerator;
 
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -10,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -28,26 +29,55 @@ public class GeneratorListener implements Listener {
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        ItemStack item = event.getItemInHand();
-        PersistentDataContainer itemPdc = item.getItemMeta().getPersistentDataContainer();
-        if (!itemPdc.has(ItemGenerator.GENERATOR_KEY, PersistentDataType.STRING)) return;
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
+        ItemStack item = event.getItem();
+        if (item == null) return;
+        PersistentDataContainer itemPdc = item.getItemMeta().getPersistentDataContainer();
+        if (!itemPdc.has(ItemGenerator.GENERATOR_KEY, PersistentDataType.STRING)) {
+            // Existing interact logic for clicking on generator
+            Block block = event.getClickedBlock();
+            ActiveGenerator gen = manager.getActiveGenerator(block.getLocation());
+            if (gen == null) return;
+
+            if (event.getPlayer().hasPermission("itemgen.admin")) {
+                event.getPlayer().sendMessage(ChatColor.GREEN + "This is a " + gen.type.name + " generator.");
+            }
+            return;
+        }
+
+        // Placement logic for generator item
         String typeName = itemPdc.get(ItemGenerator.GENERATOR_KEY, PersistentDataType.STRING);
         GeneratorType type = manager.getGeneratorTypes().get(typeName);
         if (type == null) return;
 
-        if (!event.getPlayer().hasPermission(type.permission)) {
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You don't have permission to place this generator.");
+        Player player = event.getPlayer();
+        if (!player.hasPermission(type.permission)) {
+            player.sendMessage(ChatColor.RED + "You don't have permission to place this generator.");
             return;
         }
 
-        Block block = event.getBlockPlaced();
-        ActiveGenerator ag = new ActiveGenerator(block, type);
+        Block clicked = event.getClickedBlock();
+        BlockFace face = event.getBlockFace();
+        Block placeBlock = clicked.getRelative(face);
+
+        if (!placeBlock.isEmpty()) return; // Can't place if not empty
+
+        // Force place the block
+        placeBlock.setType(type.blockMaterial);
+
+        ActiveGenerator ag = new ActiveGenerator(placeBlock, type);
         ag.lastGenerate = System.currentTimeMillis() / 1000;
         manager.addActiveGenerator(ag);
         spawnHologram(ag);
+
+        // Consume item
+        if (!player.getGameMode().equals(GameMode.CREATIVE)) {
+            item.setAmount(item.getAmount() - 1);
+        }
+
+        event.setCancelled(true); // Prevent vanilla placement
     }
 
     @EventHandler
@@ -57,20 +87,6 @@ public class GeneratorListener implements Listener {
             removeHologram(gen);
             manager.removeActiveGenerator(gen);
             // Optional: event.getPlayer().sendMessage(ChatColor.RED + "Generator removed.");
-        }
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-
-        Block block = event.getClickedBlock();
-        ActiveGenerator gen = manager.getActiveGenerator(block.getLocation());
-        if (gen == null) return;
-
-        if (event.getPlayer().hasPermission("itemgen.admin")) {
-            event.getPlayer().sendMessage(ChatColor.GREEN + "This is a " + gen.type.name + " generator.");
-            // Could add more info or removal option
         }
     }
 
@@ -121,7 +137,14 @@ public class GeneratorListener implements Listener {
         if (ag.hologram == null) return;
         long currentTime = System.currentTimeMillis() / 1000;
         long timeLeft = ag.type.interval - (currentTime - ag.lastGenerate);
-        String display = ChatColor.GOLD + ag.type.name + " Generator - " + Math.max(0, timeLeft) + "s";
+        String display;
+        if (timeLeft > 0) {
+            display = ChatColor.GOLD + ag.type.name + " Generator - " + timeLeft + "s";
+        } else if (ag.pausedReason != null) {
+            display = ChatColor.RED + ag.type.name + " Generator - Paused: " + ag.pausedReason;
+        } else {
+            display = ChatColor.GREEN + ag.type.name + " Generator - Ready";
+        }
         ag.hologram.setCustomName(display);
     }
 }

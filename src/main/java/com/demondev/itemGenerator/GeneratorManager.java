@@ -185,7 +185,14 @@ public class GeneratorManager {
         if (ag.hologram == null) return;
         long currentTime = System.currentTimeMillis() / 1000;
         long timeLeft = ag.type.interval - (currentTime - ag.lastGenerate);
-        String display = ChatColor.GOLD + ag.type.name + " Generator - " + Math.max(0, timeLeft) + "s";
+        String display;
+        if (timeLeft > 0) {
+            display = ChatColor.GOLD + ag.type.name + " Generator - " + timeLeft + "s";
+        } else if (ag.pausedReason != null) {
+            display = ChatColor.RED + ag.type.name + " Generator - Paused: " + ag.pausedReason;
+        } else {
+            display = ChatColor.GREEN + ag.type.name + " Generator - Ready";
+        }
         ag.hologram.setCustomName(display);
     }
 }

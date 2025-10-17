@@ -8,9 +8,11 @@ public class ActiveGenerator {
     GeneratorType type;
     long lastGenerate;
     ArmorStand hologram;
+    String pausedReason;
 
     ActiveGenerator(Block block, GeneratorType type) {
         this.block = block;
         this.type = type;
+        this.pausedReason = null;
     }
 }

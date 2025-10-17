@@ -1,6 +1,7 @@
 package com.demondev.itemGenerator;
 
 import org.bukkit.ChatColor;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -18,5 +19,18 @@ public class GeneratorUtil {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    public static boolean hasRoomFor(ItemStack item, Inventory inv) {
+        int remaining = item.getAmount();
+        for (ItemStack inSlot : inv.getContents()) {
+            if (inSlot == null) {
+                remaining -= item.getMaxStackSize();
+            } else if (inSlot.isSimilar(item)) {
+                remaining -= (inSlot.getMaxStackSize() - inSlot.getAmount());
+            }
+            if (remaining <= 0) return true;
+        }
+        return false;
     }
 }
