@@ -4,11 +4,9 @@ generators:
     items:
       - item: DIAMOND
         amount: 1
-        chance: 50.0
-      - item: EMERALD
-        amount: 1
-        chance: 50.0
+        chance: 100.0
     interval: 60  # seconds between generations
+    max_crafts: 2  # Limit to 5 crafts per player; -1 for unlimited
     permission: itemgen.use.diamond
     recipe:
       shape:
@@ -25,6 +23,7 @@ generators:
         amount: 5
         chance: 100.0
     interval: 30
+    max_crafts: 2  # Limit to 5 crafts per player; -1 for unlimited
     permission: itemgen.use.iron
     recipe:
       shape:

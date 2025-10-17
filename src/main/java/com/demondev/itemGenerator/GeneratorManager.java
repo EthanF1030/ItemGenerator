@@ -1,5 +1,6 @@
 package com.demondev.itemGenerator;
 
+
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -67,7 +68,9 @@ public class GeneratorManager {
                 }
             }
 
-            generatorTypes.put(key, new GeneratorType(key, blockMaterial, items, interval, permission, shape, ingredients));
+            int maxCrafts = section.getInt("max_crafts", -1);
+
+            generatorTypes.put(key, new GeneratorType(key, blockMaterial, items, interval, permission, shape, ingredients, maxCrafts));
         }
     }
 

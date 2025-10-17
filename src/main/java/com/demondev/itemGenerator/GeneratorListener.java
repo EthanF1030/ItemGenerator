@@ -3,6 +3,7 @@ package com.demondev.itemGenerator;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
@@ -12,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -102,14 +104,51 @@ public class GeneratorListener implements Listener {
         GeneratorType type = manager.getGeneratorTypes().get(typeName);
         if (type == null) return;
 
-        boolean hasPerm = true;
         if (event.getViewers().size() > 0 && event.getViewers().get(0) instanceof Player) {
             Player player = (Player) event.getViewers().get(0);
-            hasPerm = player.hasPermission(type.permission);
+            if (!player.hasPermission(type.permission)) {
+                event.getInventory().setResult(null);
+                return;
+            }
+            if (type.maxCrafts >= 0) {
+                PersistentDataContainer playerPdc = player.getPersistentDataContainer();
+                NamespacedKey countKey = new NamespacedKey(plugin, "crafts_" + type.name);
+                int current = playerPdc.getOrDefault(countKey, PersistentDataType.INTEGER, 0);
+                if (current >= type.maxCrafts) {
+                    event.getInventory().setResult(null);
+                    // Optional: player.sendMessage(ChatColor.RED + "You have reached the craft limit for " + type.name + " generators.");
+                }
+            }
         }
+    }
 
-        if (!hasPerm) {
-            event.getInventory().setResult(null);
+    @EventHandler
+    public void onCraftItem(CraftItemEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
+
+        ItemStack result = event.getInventory().getResult();
+        if (result == null) return;
+
+        PersistentDataContainer pdc = result.getItemMeta().getPersistentDataContainer();
+        if (!pdc.has(ItemGenerator.GENERATOR_KEY, PersistentDataType.STRING)) return;
+
+        String typeName = pdc.get(ItemGenerator.GENERATOR_KEY, PersistentDataType.STRING);
+        GeneratorType type = manager.getGeneratorTypes().get(typeName);
+        if (type == null) return;
+
+        // Check limit again to be safe
+        if (type.maxCrafts >= 0) {
+            PersistentDataContainer playerPdc = player.getPersistentDataContainer();
+            NamespacedKey countKey = new NamespacedKey(plugin, "crafts_" + type.name);
+            int current = playerPdc.getOrDefault(countKey, PersistentDataType.INTEGER, 0);
+            if (current >= type.maxCrafts) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You have reached the craft limit for " + type.name + " generators.");
+                return;
+            }
+            // Increment
+            playerPdc.set(countKey, PersistentDataType.INTEGER, current + 1);
         }
     }
 

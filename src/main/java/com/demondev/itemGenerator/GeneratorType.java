@@ -13,9 +13,10 @@ public class GeneratorType {
     String permission;
     List<String> shape;
     Map<Character, Material> ingredients;
+    int maxCrafts;
 
     GeneratorType(String name, Material blockMaterial, List<GeneratorItem> items, long interval, String permission,
-                  List<String> shape, Map<Character, Material> ingredients) {
+                  List<String> shape, Map<Character, Material> ingredients, int maxCrafts) {
         this.name = name;
         this.blockMaterial = blockMaterial;
         this.items = items;
@@ -23,5 +24,6 @@ public class GeneratorType {
         this.permission = permission;
         this.shape = shape;
         this.ingredients = ingredients;
+        this.maxCrafts = maxCrafts;
     }
 }
